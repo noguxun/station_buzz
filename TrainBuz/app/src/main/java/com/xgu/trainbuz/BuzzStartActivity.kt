@@ -1,9 +1,14 @@
 package com.xgu.trainbuz
 
 import android.Manifest
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.os.IBinder
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.ActivityCompat.shouldShowRequestPermissionRationale
 import android.support.v4.content.ContextCompat
@@ -19,6 +24,24 @@ import android.support.design.widget.Snackbar
 class BuzzStartActivity : AppCompatActivity() {
 
     private val tag = this::class.java.simpleName
+    private var locService: LocService? = null
+
+    private val locServiceConnection = object : ServiceConnection {
+        override fun onServiceConnected(
+            className: ComponentName,
+            service: IBinder
+        ) {
+            val binder = service as LocService.MyLocalBinder
+            locService = binder.getService()
+
+            println("LocService connected")
+        }
+
+        override fun onServiceDisconnected(name: ComponentName) {
+            locService = null
+            println("LocService disconnected")
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,18 +50,24 @@ class BuzzStartActivity : AppCompatActivity() {
         buttonStartBuzz.setOnClickListener {
             Log.d(tag,"start buzz clicked")
 
-            requestLocationPermission()
+            if (requestLocationPermission() == true) {
+                locService?.makeLocationRequest()
+            }
         }
+
+
+        val intent = Intent(this, LocService::class.java)
+        bindService(intent, locServiceConnection, Context.BIND_AUTO_CREATE)
     }
 
-    private fun requestLocationPermission() {
+    private fun requestLocationPermission(): Boolean{
         val locPermission = ContextCompat.checkSelfPermission(
             applicationContext,
             Manifest.permission.ACCESS_FINE_LOCATION)
 
         if (locPermission == PackageManager.PERMISSION_GRANTED) {
             Log.i(tag, "Location permission granted already.")
-            return
+            return true
         }
 
         // Provide an additional rationale to the user. This would happen if the user denied the
@@ -56,6 +85,8 @@ class BuzzStartActivity : AppCompatActivity() {
         } else {
             ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 0)
         }
+
+        return false
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -63,7 +94,7 @@ class BuzzStartActivity : AppCompatActivity() {
 
         if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             println("granted")
-
+            locService?.makeLocationRequest()
         } else {
             println("Please allow the permission")
         }
