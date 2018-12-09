@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">TrainBuz</string>
+    <string name="destation_station_label">Destination</string>
+    <string name="tokyo">Tokyo</string>
+    <string name="latitude">Latitude</string>
+    <string name="tokyo_lat">35.681391</string>
+    <string name="longitude">Longitude</string>
+    <string name="tokyo_longitude">139.766103</string>
+    <string name="change_destination">Change Destinatin</string>
+    <string name="start_buzz">Start Buzz</string>
+</resources>
