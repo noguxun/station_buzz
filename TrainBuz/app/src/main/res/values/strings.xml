@@ -8,4 +8,6 @@
     <string name="tokyo_longitude">139.766103</string>
     <string name="change_destination">Change Destinatin</string>
     <string name="start_buzz">Start Buzz</string>
+    <string name="location_permission_rationale">Need location permission to find out where you are now.</string>
+    <string name="requestion_permission">Get Permission</string>
 </resources>
