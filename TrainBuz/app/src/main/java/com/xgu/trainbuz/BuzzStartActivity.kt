@@ -50,8 +50,17 @@ class BuzzStartActivity : AppCompatActivity() {
         buttonStartBuzz.setOnClickListener {
             Log.d(tag,"start buzz clicked")
 
-            if (requestLocationPermission() == true) {
-                locService?.makeLocationRequest()
+            if (locService?.isServiceStarted == false) {
+                if (requestLocationPermission() == true) {
+                    locService?.makeLocationRequest()
+                }
+                else {
+                    Log.e(tag, "No permission got")
+                }
+            }
+            else {
+                println("Service already started, cancel it.")
+                locService?.cancelLocationRequest()
             }
         }
 
