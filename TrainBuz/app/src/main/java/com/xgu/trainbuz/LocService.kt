@@ -9,11 +9,13 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.os.Binder
-import android.os.Build
-import android.os.IBinder
+import android.os.*
 import android.support.v4.app.NotificationCompat
 import com.google.android.gms.location.*
+import android.media.RingtoneManager
+import android.media.Ringtone
+
+
 
 class LocService : Service() {
 
@@ -47,6 +49,9 @@ class LocService : Service() {
                 for (location in locationResult.locations){
                     println("My Location ${location.longitude} ${location.latitude}")
                 }
+
+                vibrate()
+                ring()
             }
         }
 
@@ -107,5 +112,30 @@ class LocService : Service() {
 
 
         startForeground(magicChannalId, notification)
+    }
+
+    fun vibrate() {
+        val v: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+
+
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            v.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
+            println("vibrate new")
+        } else {
+            //deprecated in API 26
+            v.vibrate(500)
+            println("vibrate old ${v.hasVibrator()}")
+        }
+    }
+
+    fun ring() {
+        try {
+            val notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+            val r = RingtoneManager.getRingtone(applicationContext, notification)
+            r.play()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }
