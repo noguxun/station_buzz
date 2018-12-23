@@ -10,4 +10,6 @@
     <string name="start_buzz">Start Buzz</string>
     <string name="location_permission_rationale">Need location permission to find out where you are now.</string>
     <string name="requestion_permission">Get Permission</string>
+    <string name="cur_latitude">Current Latitude</string>
+    <string name="cur_longitude">Current Longitude</string>
 </resources>

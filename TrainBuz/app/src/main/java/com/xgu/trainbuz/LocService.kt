@@ -9,11 +9,18 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.location.Location
 import android.os.*
 import android.support.v4.app.NotificationCompat
 import com.google.android.gms.location.*
 import android.media.RingtoneManager
 import android.media.Ringtone
+import com.xgu.trainbuz.R.string.longitude
+import com.xgu.trainbuz.R.string.latitude
+import android.location.LocationManager
+import android.util.Log
+import android.support.v4.content.LocalBroadcastManager
+
 
 
 
@@ -24,6 +31,15 @@ class LocService : Service() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
     var isServiceStarted = false
+
+    var destinationLatitude = 35.681391
+    var destinationLongitude = 139.766103
+
+    var currentLatitude = 0.0
+    var currentLongitude = 0.0
+
+    val tag = "LocService"
+
 
     override fun onBind(intent: Intent): IBinder {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
@@ -45,13 +61,30 @@ class LocService : Service() {
 
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult?) {
-                locationResult ?: return
-                for (location in locationResult.locations){
-                    println("My Location ${location.longitude} ${location.latitude}")
+
+                Log.i(tag, "onLocationResult")
+
+                if (locationResult == null) {
+                    Log.i(tag, "no result")
+                    return
                 }
 
-                vibrate()
-                ring()
+                for (location in locationResult.locations){
+                    var dis = FloatArray(1)
+
+                    currentLatitude = location.latitude
+                    currentLongitude = location.longitude
+
+                    Location.distanceBetween(currentLatitude,currentLongitude, destinationLatitude, destinationLongitude, dis)
+
+                    println("My Location ${location.longitude} ${location.latitude}, dis ${dis[0]}")
+                    sendLocationMessage()
+
+                    vibrate()
+                    ring()
+
+                    break;
+                }
             }
         }
 
@@ -117,8 +150,6 @@ class LocService : Service() {
     fun vibrate() {
         val v: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
 
-
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             v.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
             println("vibrate new")
@@ -137,5 +168,11 @@ class LocService : Service() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    fun sendLocationMessage() {
+        val intent = Intent("BuzzStationLocationUpdate")
+
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
     }
 }
