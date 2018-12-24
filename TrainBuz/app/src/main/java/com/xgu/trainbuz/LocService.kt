@@ -14,12 +14,11 @@ import android.os.*
 import android.support.v4.app.NotificationCompat
 import com.google.android.gms.location.*
 import android.media.RingtoneManager
-import android.media.Ringtone
-import com.xgu.trainbuz.R.string.longitude
-import com.xgu.trainbuz.R.string.latitude
-import android.location.LocationManager
 import android.util.Log
 import android.support.v4.content.LocalBroadcastManager
+import android.os.CountDownTimer
+
+
 
 
 
@@ -30,16 +29,19 @@ class LocService : Service() {
     private val myBinder = MyLocalBinder()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
-    var isServiceStarted = false
+    var isLocRequestOn = false
+    var isLocTrackingOn = false
 
     var destinationLatitude = 35.681391
     var destinationLongitude = 139.766103
 
     var currentLatitude = 0.0
     var currentLongitude = 0.0
+    var currentDistance = 0.0f
 
     val tag = "LocService"
 
+    private lateinit var timer: CountDownTimer
 
     override fun onBind(intent: Intent): IBinder {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
@@ -52,40 +54,87 @@ class LocService : Service() {
         }
     }
 
+    private fun onTimerFinished() {
+        Log.i(tag, "onTimerFinished")
+        makeLocationRequest()
+    }
+
+    private fun startTimer(seconds: Long){
+        timer = object : CountDownTimer(seconds * 1000, 1000) {
+            override fun onFinish() = onTimerFinished()
+
+            override fun onTick(millisUntilFinished: Long) {
+                // there is nothing to do
+            }
+        }.start()
+
+        Log.i(tag, "timerStarted")
+    }
+
+    private fun onMyLocationUpdated(locationResult: LocationResult?){
+        Log.i(tag, "onMyLocationUpdated")
+
+        if (locationResult == null || locationResult.locations.size == 0) {
+            Log.i(tag, "no result")
+            return
+        }
+
+        val location = locationResult.locations[0]
+        var dis = FloatArray(1)
+
+        currentLatitude = location.latitude
+        currentLongitude = location.longitude
+
+        Location.distanceBetween(currentLatitude,currentLongitude, destinationLatitude, destinationLongitude, dis)
+        currentDistance = dis[0]
+
+        println("My Location ${location.longitude} ${location.latitude}, dis ${currentDistance}")
+        sendLocationMessage()
+
+        vibrate()
+        // ring()
+
+        cancelLocationRequest()
+        startTimer(5L)
+    }
+
+    fun startLocTracking() {
+        if (isLocTrackingOn) {
+            println("nothing to do, tracking already on")
+            return
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startNotificationAbove26()
+        }
+        else {
+            startNotificationBelow26()
+        }
+
+        isLocTrackingOn = true
+
+        makeLocationRequest()
+    }
+
+    fun stopLocTracking() {
+        if (isLocTrackingOn == false) {
+            println("nothing to do, tracking already off")
+        }
+        stopForeground(true)
+        isLocTrackingOn = false
+    }
+
+
     @SuppressLint("MissingPermission")
-    fun makeLocationRequest() {
-        if (isServiceStarted == true) {
+    private fun makeLocationRequest() {
+        Log.i(tag,"make Location Request")
+        if (isLocRequestOn == true) {
             println("Service already started, nothing to do")
             return
         }
 
         locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult?) {
-
-                Log.i(tag, "onLocationResult")
-
-                if (locationResult == null) {
-                    Log.i(tag, "no result")
-                    return
-                }
-
-                for (location in locationResult.locations){
-                    var dis = FloatArray(1)
-
-                    currentLatitude = location.latitude
-                    currentLongitude = location.longitude
-
-                    Location.distanceBetween(currentLatitude,currentLongitude, destinationLatitude, destinationLongitude, dis)
-
-                    println("My Location ${location.longitude} ${location.latitude}, dis ${dis[0]}")
-                    sendLocationMessage()
-
-                    vibrate()
-                    ring()
-
-                    break;
-                }
-            }
+            override fun onLocationResult(locationResult: LocationResult?) = onMyLocationUpdated(locationResult)
         }
 
         val locationRequest = LocationRequest().apply {
@@ -97,26 +146,22 @@ class LocService : Service() {
 
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null /* Looper */)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startServiceAbove26()
-        }
-        else {
-            startServiceBelow26()
-        }
 
-        isServiceStarted = true
+
+        isLocRequestOn = true
+
     }
 
     @SuppressLint("MissingPermission")
-    fun cancelLocationRequest() {
+    private fun cancelLocationRequest() {
         fusedLocationClient.removeLocationUpdates(locationCallback)
-        stopForeground(true)
 
-        isServiceStarted = false
+
+        isLocRequestOn = false
     }
 
     @TargetApi(Build.VERSION_CODES.O)
-    private fun startServiceAbove26() {
+    private fun startNotificationAbove26() {
         val channelId = "com.xgu.trainbuz"
         val channelName = "Train Buzz"
         val chan = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_NONE)
@@ -136,13 +181,12 @@ class LocService : Service() {
         startForeground(magicChannalId, notification)
     }
 
-    private fun startServiceBelow26() {
+    private fun startNotificationBelow26() {
         val notification = NotificationCompat.Builder(this).apply {
             setContentTitle("Train Buzz")
             setContentText("Train Buzz Notification")
             setSmallIcon(R.mipmap.ic_launcher)
         }.build()
-
 
         startForeground(magicChannalId, notification)
     }

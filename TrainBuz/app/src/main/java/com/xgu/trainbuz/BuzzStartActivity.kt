@@ -48,9 +48,9 @@ class BuzzStartActivity : AppCompatActivity() {
         buttonStartBuzz.setOnClickListener {
             Log.d(tag,"start buzz clicked")
 
-            if (locService?.isServiceStarted == false) {
+            if (locService?.isLocRequestOn == false) {
                 if (requestLocationPermission() == true) {
-                    locService?.makeLocationRequest()
+                    locService?.startLocTracking()
                 }
                 else {
                     Log.e(tag, "No permission got")
@@ -58,7 +58,7 @@ class BuzzStartActivity : AppCompatActivity() {
             }
             else {
                 println("Service already started, cancel it.")
-                locService?.cancelLocationRequest()
+                locService?.stopLocTracking()
             }
         }
 
@@ -137,7 +137,7 @@ class BuzzStartActivity : AppCompatActivity() {
 
         if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             println("granted")
-            locService?.makeLocationRequest()
+            locService?.startLocTracking()
         } else {
             println("Please allow the permission")
         }
