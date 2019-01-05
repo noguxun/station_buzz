@@ -62,6 +62,13 @@ class BuzzStartActivity : AppCompatActivity() {
             }
         }
 
+        buttonChangeDes.setOnClickListener{
+            Log.d(tag,"change destionation clicked")
+
+            val intent = Intent(this, SelectStationActivity::class.java)
+            startActivity(intent)
+        }
+
         val intent = Intent(this, LocService::class.java)
         isLocServiceBinded = bindService(intent, locServiceConnection, Context.BIND_AUTO_CREATE)
     }
