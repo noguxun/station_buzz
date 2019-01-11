@@ -37,5 +37,8 @@ class SelectStationActivity : AppCompatActivity() {
                 return false
             }
         })
+
+        stationAdapter = StationListAdaptor()
+        stationAdapter.loadStationData(this)
     }
 }
