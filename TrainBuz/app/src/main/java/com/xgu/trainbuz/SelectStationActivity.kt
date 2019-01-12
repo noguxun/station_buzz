@@ -17,6 +17,7 @@ class SelectStationActivity : AppCompatActivity() {
         stationAdapter = StationListAdaptor()
 
         listView.adapter = stationAdapter
+        stationAdapter.loadStationData(this)
 
         searchView.apply {
             isActivated = true
@@ -32,13 +33,10 @@ class SelectStationActivity : AppCompatActivity() {
             }
 
             override fun onQueryTextChange(newText: String): Boolean {
-
+                stationAdapter.filter.filter(newText)
                 // TODO
                 return false
             }
         })
-
-        stationAdapter = StationListAdaptor()
-        stationAdapter.loadStationData(this)
     }
 }
