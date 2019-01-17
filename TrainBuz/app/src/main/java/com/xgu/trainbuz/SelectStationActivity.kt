@@ -29,10 +29,12 @@ class SelectStationActivity : AppCompatActivity() {
 
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String): Boolean {
+                println("onQueryTextSubmit ${query}")
                 return false
             }
 
             override fun onQueryTextChange(newText: String): Boolean {
+                println("onQueryTextChange ${newText}")
                 stationAdapter.filter.filter(newText)
                 // TODO
                 return false

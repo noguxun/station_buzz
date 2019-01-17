@@ -11,10 +11,63 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.nio.charset.Charset
 
+// we need to show prefecture name
+//  http://www.ekidata.jp/doc/pref.php
 class StationListAdaptor : BaseAdapter(), Filterable {
+
+    val prefectures = arrayOf(
+        "北海道",
+        "青森県",
+        "岩手県",
+        "宮城県",
+        "秋田県",
+        "山形県",
+        "福島県",
+        "茨城県",
+        "栃木県",
+        "群馬県",
+        "埼玉県",
+        "千葉県",
+        "東京都",
+        "神奈川県",
+        "新潟県",
+        "富山県",
+        "石川県",
+        "福井県",
+        "山梨県",
+        "長野県",
+        "岐阜県",
+        "静岡県",
+        "愛知県",
+        "三重県",
+        "滋賀県",
+        "京都府",
+        "大阪府",
+        "兵庫県",
+        "奈良県",
+        "和歌山県",
+        "鳥取県",
+        "島根県",
+        "岡山県",
+        "広島県",
+        "山口県",
+        "徳島県",
+        "香川県",
+        "愛媛県",
+        "高知県",
+        "福岡県",
+        "佐賀県",
+        "長崎県",
+        "熊本県",
+        "大分県",
+        "宮崎県",
+        "鹿児島県",
+        "沖縄県"
+    )
+
     class Station(stationId: Int, groupId: Int,
                   nameKanji: String, nameKata: String, nameHira: String, nameRoma: String,
-                  lon: Double, lat: Double){
+                  lon: Double, lat: Double, prefecture: Int){
         val stationId = stationId
         val groupId = groupId
         val nameKanji = nameKanji
@@ -23,11 +76,13 @@ class StationListAdaptor : BaseAdapter(), Filterable {
         val nameRoma = nameRoma
         val lon = lon
         val lat = lat
+        val prefecture = prefecture
     }
 
-    var stationList: MutableList<Station> = ArrayList()
-    var showList: MutableList<Station> = ArrayList()
+    var stationList = ArrayList<Station>()
+    var showList = ArrayList<Station>()
     val maxShowCount = 10
+    private val filter = StationFilter()
 
     override fun getCount(): Int {
         return showList.size
@@ -46,7 +101,8 @@ class StationListAdaptor : BaseAdapter(), Filterable {
 
         val itemBinding = DataBindingUtil.inflate(inflater, R.layout.station_list_item, null, false) as StationListItemBinding
 
-        itemBinding.stringName.text = showList[position].nameKanji
+        var station = showList[position]
+        itemBinding.stringName.text = station.nameKanji + " (${prefectures[station.prefecture - 1]})"
 
         itemBinding.root.setOnClickListener{
             Toast.makeText(parent.context, "Clicked: ${showList[position].nameKanji}", Toast.LENGTH_SHORT).show()
@@ -56,36 +112,14 @@ class StationListAdaptor : BaseAdapter(), Filterable {
     }
 
     override fun getFilter(): Filter {
-        return StationFilter()
+        return filter
     }
 
     private inner class StationFilter : Filter() {
         override fun performFiltering(constraint: CharSequence?): FilterResults {
             val results = FilterResults()
 
-            if (constraint != null && constraint.isNotEmpty()) {
-                val filterList = ArrayList<Station>()
-
-                var count = 0
-                for (i in stationList.indices) {
-                    if (stationList[i].nameRoma.toUpperCase().contains(constraint.toString().toUpperCase())) {
-                        filterList.add(stationList[i])
-                        count += 1
-                        println("${stationList[i].nameRoma}")
-                    }
-
-                    if (count > maxShowCount) {
-                        break
-                    }
-
-                    // println("${stationList[i].nameRoma}")
-                }
-
-                println("Filtering Constraint ${constraint.toString().toUpperCase()}")
-
-                results.count = filterList.size
-                results.values = filterList
-            } else {
+            if (constraint == null || constraint.isEmpty()) {
                 println("Constraint is None")
 
                 val filterList = ArrayList<Station>()
@@ -101,7 +135,53 @@ class StationListAdaptor : BaseAdapter(), Filterable {
 
                 results.count = filterList.size
                 results.values = filterList
+
+                return results
             }
+
+            val filterList = ArrayList<Station>()
+
+            var count = 0
+            for (i in stationList.indices) {
+                if (count > maxShowCount) {
+                    break
+                }
+
+                if (stationList[i].nameRoma.contains(constraint.toString().toUpperCase())) {
+                    filterList.add(stationList[i])
+                    count += 1
+                    println("${i} ${stationList[i].nameRoma}")
+                    continue
+                }
+
+                if (stationList[i].nameKanji.contains(constraint.toString())) {
+                    filterList.add(stationList[i])
+                    count += 1
+                    println("${i} ${stationList[i].nameKanji}")
+                    continue
+                }
+
+                if (stationList[i].nameKata.contains(constraint.toString())) {
+                    filterList.add(stationList[i])
+                    count += 1
+                    println("${i} ${stationList[i].nameKata}")
+                    continue
+                }
+
+                if (stationList[i].nameHira.contains(constraint.toString())) {
+                    filterList.add(stationList[i])
+                    count += 1
+                    println("${i} ${stationList[i].nameHira}")
+                    continue
+                }
+
+                // println("${stationList[i].nameRoma}")
+            }
+
+            println("Filtering Constraint ${constraint.toString().toUpperCase()}")
+
+            results.count = filterList.size
+            results.values = filterList
 
             return results
         }
@@ -113,6 +193,8 @@ class StationListAdaptor : BaseAdapter(), Filterable {
                 showList.removeAt(i - 1)
                 i = i - 1
             }
+
+            println("Publishing Result ${constraint.toString().toUpperCase()}")
 
             val stationList = results.values as List<Station>
             for (station in stationList) {
@@ -134,15 +216,11 @@ class StationListAdaptor : BaseAdapter(), Filterable {
 
             count += 1
 
-            if (count == 1) {
-                // skip the first line with title
-                continue
-            }
-
             val cols = line?.split(",")
 
             cols?.let {
-                val station = Station(it[0].toInt(), it[1].toInt(), it[2], it[3], it[4], it[5], it[6].toDouble(), it[7].toDouble())
+                val station = Station(it[0].toInt(), it[1].toInt(), it[2], it[3], it[4],
+                    it[5].toUpperCase(), it[6].toDouble(), it[7].toDouble(), it[8].toInt())
                 stationList.add(station)
                 // val station = T4Station(cols[2].trim(), cols[9].toDouble(), cols[10].toDouble())
                 // println("${cols[0]} ${cols[1]} ${cols[2]} ${cols[3]} ${cols[4]} ${cols[5]} ${cols[6]} ${it[7]}")
