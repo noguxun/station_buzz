@@ -1,7 +1,9 @@
 package com.xgu.trainbuz
 
 import android.content.Context
+import android.content.Intent
 import android.databinding.DataBindingUtil
+import android.support.v7.app.AppCompatActivity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,7 +15,8 @@ import java.nio.charset.Charset
 
 // we need to show prefecture name
 //  http://www.ekidata.jp/doc/pref.php
-class StationListAdaptor : BaseAdapter(), Filterable {
+class StationListAdaptor(activity: AppCompatActivity) : BaseAdapter(), Filterable {
+    val parentActivity = activity
 
     val prefectures = arrayOf(
         "北海道",
@@ -102,10 +105,18 @@ class StationListAdaptor : BaseAdapter(), Filterable {
         val itemBinding = DataBindingUtil.inflate(inflater, R.layout.station_list_item, null, false) as StationListItemBinding
 
         var station = showList[position]
-        itemBinding.stringName.text = station.nameKanji + " (${prefectures[station.prefecture - 1]})"
+        val prefectureName = prefectures[station.prefecture - 1]
+        itemBinding.stationName.text = station.nameKanji
+        itemBinding.stationPrefecture.text = prefectureName
 
         itemBinding.root.setOnClickListener{
             Toast.makeText(parent.context, "Clicked: ${showList[position].nameKanji}", Toast.LENGTH_SHORT).show()
+            val intent = Intent(parentActivity, BuzzStartActivity::class.java)
+            intent.putExtra("STATION_NAME", station.nameKanji)
+            intent.putExtra("STATION_PRE", prefectureName)
+            intent.putExtra("STATION_LON", station.lon)
+            intent.putExtra("STATION_LAT", station.lat)
+            parentActivity.startActivity(intent)
         }
 
         return itemBinding.root

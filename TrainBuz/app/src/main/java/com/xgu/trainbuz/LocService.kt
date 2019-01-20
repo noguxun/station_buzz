@@ -18,11 +18,6 @@ import android.util.Log
 import android.support.v4.content.LocalBroadcastManager
 import android.os.CountDownTimer
 
-
-
-
-
-
 class LocService : Service() {
 
     private val magicChannalId = 0x12345
@@ -85,7 +80,9 @@ class LocService : Service() {
         currentLatitude = location.latitude
         currentLongitude = location.longitude
 
-        Location.distanceBetween(currentLatitude,currentLongitude, destinationLatitude, destinationLongitude, dis)
+        Log.i(tag, "distance calc ${currentLatitude}, ${currentLongitude}, ${destinationLatitude}, ${destinationLongitude}")
+
+        Location.distanceBetween(currentLatitude, currentLongitude, destinationLatitude, destinationLongitude, dis)
         currentDistance = dis[0]
 
         println("My Location ${location.longitude} ${location.latitude}, dis ${currentDistance}")

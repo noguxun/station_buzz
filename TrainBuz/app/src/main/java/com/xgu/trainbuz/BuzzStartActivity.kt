@@ -21,6 +21,8 @@ class BuzzStartActivity : AppCompatActivity() {
     private val tag = this::class.java.simpleName
     private var locService: LocService? = null
     private var isLocServiceBinded = false
+    private var desLat: Double? = 0.0
+    private var desLon: Double? = 0.0
 
     private val locServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(
@@ -43,14 +45,18 @@ class BuzzStartActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_buzz_start)
 
-        Log.i(tag,"onCreate")
+        Log.i(tag, "onCreate")
 
         buttonStartBuzz.setOnClickListener {
             Log.d(tag,"start buzz clicked")
 
             if (locService?.isLocRequestOn == false) {
                 if (requestLocationPermission() == true) {
+                    locService?.destinationLongitude = desLon!!
+                    locService?.destinationLatitude = desLat!!
                     locService?.startLocTracking()
+
+                    buttonStartBuzz.text = resources.getString(R.string.stop_buzz)
                 }
                 else {
                     Log.e(tag, "No permission got")
@@ -59,6 +65,8 @@ class BuzzStartActivity : AppCompatActivity() {
             else {
                 println("Service already started, cancel it.")
                 locService?.stopLocTracking()
+
+                buttonStartBuzz.text = resources.getString(R.string.start_buzz)
             }
         }
 
@@ -75,7 +83,7 @@ class BuzzStartActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.i(tag,"onDestroy")
+        Log.i(tag, "onDestroy")
 
         if (isLocServiceBinded) {
             Log.i(tag, "unbind location service")
@@ -86,7 +94,7 @@ class BuzzStartActivity : AppCompatActivity() {
     override fun onPause() {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(locUpdateReceiver)
         super.onPause()
-        Log.i(tag,"onPause")
+        Log.i(tag, "onPause")
     }
 
     // Handling the received Intents for the "my-integer" event
@@ -100,12 +108,34 @@ class BuzzStartActivity : AppCompatActivity() {
 
             textViewCurLat.text = "${locService?.currentLatitude}"
             textViewCurLon.text = "${locService?.currentLongitude}"
+            textViewCurDistance.text = "${locService?.currentDistance}"
         }
     }
 
     override fun onResume() {
         super.onResume()
         Log.i(tag, "onResume")
+
+        val extras: Bundle? = getIntent().extras
+
+        val staName: String? = extras?.getString("STATION_NAME")
+        val staPrefecture: String? = extras?.getString("STATION_PRE")
+        desLon = extras?.getDouble("STATION_LON")
+        desLat = extras?.getDouble("STATION_LAT")
+
+
+
+        if (staName != null && staPrefecture != null) {
+            textViewStation.text = staName + "  (${staPrefecture})"
+        }
+
+        if (desLat != null) {
+            textViewLatitude.text = "${desLat}"
+        }
+
+        if (desLon != null) {
+            textViewLongitude.text = "${desLon}"
+        }
 
         LocalBroadcastManager.getInstance(this).registerReceiver(locUpdateReceiver, IntentFilter("BuzzStationLocationUpdate"))
     }

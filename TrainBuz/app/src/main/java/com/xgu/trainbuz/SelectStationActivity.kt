@@ -14,7 +14,7 @@ class SelectStationActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_select_station)
 
-        stationAdapter = StationListAdaptor()
+        stationAdapter = StationListAdaptor(this)
 
         listView.adapter = stationAdapter
         stationAdapter.loadStationData(this)

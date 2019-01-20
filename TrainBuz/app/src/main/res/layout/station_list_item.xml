@@ -5,14 +5,26 @@
             android:layout_height="wrap_content">
 
         <TextView
-                android:id="@+id/stringName"
+                android:id="@+id/stationName"
+                android:text="text1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
                 android:textAllCaps="false"
-                android:textAppearance="?android:attr/textAppearanceMedium" />
+                android:textAppearance="?android:attr/textAppearanceMedium"/>
+
+        <TextView
+                android:id="@+id/stationPrefecture"
+                android:text="text2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_below="@id/stationName"
+                android:textAllCaps="false"
+                android:textAppearance="?android:attr/textAppearanceMedium" android:textSize="14sp"
+                android:textStyle="italic"/>
 
     </RelativeLayout>
 
